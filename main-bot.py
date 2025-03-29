@@ -49,7 +49,7 @@ rsi_length = 14
 rsi_overbought = 70
 rsi_oversold = 30
 
-def fetch_klines(symbol, interval, limit=100):
+def fetch_klines(symbol, interval, limit=200):
     """Fetch historical kline data from Bybit."""
     try:
         response = session.get_kline(symbol=symbol, interval=interval, limit=limit)
@@ -58,13 +58,19 @@ def fetch_klines(symbol, interval, limit=100):
             return None
         # data = response['result']
         # df = pd.DataFrame(data)
+        # 🔍 Debugging: Print raw response to verify data structure
+        # logging.info("Klines Response: %s", response)
+
         columns = ['open_time', 'open', 'high', 'low', 'close', 'volume', 'turnover']
-        df = pd.DataFrame(response['result'], columns=columns)
+        df = pd.DataFrame(response['result']['list'], columns=columns)
 
         # df['open_time'] = pd.to_datetime(df['open_time'], unit='s')
         df['open_time'] = pd.to_datetime(df['open_time'].astype(float), unit='ms')
         df.set_index('open_time', inplace=True)
         df = df.astype(float)
+
+        # 🔍 Debugging: Print first few rows to confirm correct data
+        # logging.info("Klines DataFrame:\n%s", df.head())
         return df
     except Exception as e:
         logging.error("Exception in fetch_klines: %s", e)
@@ -191,8 +197,8 @@ def main():
             logging.error("Failed to fetch kline data.")
         
         # Sleep duration: adjust sleep time based on timeframe (60 seconds for 1-min, 300 for 5-min)
-        # sleep_time = 60 if timeframe == "1" else 300
-        sleep_time = 10  # 15-minute timeframe
+        sleep_time = 60 if timeframe == "1" else 300
+        # sleep_time = 10  # 15-minute timeframe
         time.sleep(sleep_time)
 
 if __name__ == '__main__':
